@@ -1,9 +1,58 @@
+// src/components/layout/Navbar.jsx (updated)
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import Button from '../common/Button';
 
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
+  const renderAuthenticatedNav = () => {
+    if (user?.role === 'facility_owner') {
+      return (
+        <>
+          <Link to="/facility/dashboard" className="nav-link">
+            Dashboard
+          </Link>
+          <Link to="/facility/bookings" className="nav-link">
+            Bookings
+          </Link>
+          <Link to="/facility/settings" className="nav-link">
+            Settings
+          </Link>
+        </>
+      );
+    } else if (user?.role === 'player') {
+      return (
+        <>
+          <Link to="/player/dashboard" className="nav-link">
+            Dashboard
+          </Link>
+          <Link to="/player/discover" className="nav-link">
+            Discover
+          </Link>
+          <Link to="/player/bookings" className="nav-link">
+            My Bookings
+          </Link>
+          <Link to="/player/settings" className="nav-link">
+            Settings
+          </Link>
+        </>
+      );
+    }
+    return null;
+  };
 
   return (
     <nav className="bg-white shadow-sm border-b border-gray-200">
@@ -17,22 +66,26 @@ function Navbar() {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link
-              to="/discover"
-              className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-            >
-              Discover
-            </Link>
-            <Link
-              to="/about"
-              className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-            >
-              About
-            </Link>
-            <Button variant="outline" size="sm">
-              Login
-            </Button>
-            <Button size="sm">Sign Up</Button>
+            {user ? (
+              <>
+                {renderAuthenticatedNav()}
+                <span className="text-sm text-gray-600">
+                  Welcome, {user.full_name || user.email}
+                </span>
+                <Button variant="outline" size="sm" onClick={handleLogout}>
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="nav-link">
+                  Login
+                </Link>
+                <Link to="/register">
+                  <Button size="sm">Sign Up</Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -66,24 +119,23 @@ function Navbar() {
         {isMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-gray-200">
-              <Link
-                to="/discover"
-                className="block text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-base font-medium"
-              >
-                Discover
-              </Link>
-              <Link
-                to="/about"
-                className="block text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-base font-medium"
-              >
-                About
-              </Link>
-              <div className="pt-2 space-y-2">
-                <Button variant="outline" className="w-full">
-                  Login
-                </Button>
-                <Button className="w-full">Sign Up</Button>
-              </div>
+              {user ? (
+                <>
+                  {renderAuthenticatedNav()}
+                  <Button variant="outline" className="w-full mt-2" onClick={handleLogout}>
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" className="block nav-link">
+                    Login
+                  </Link>
+                  <Link to="/register">
+                    <Button className="w-full mt-2">Sign Up</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}

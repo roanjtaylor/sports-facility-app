@@ -1,3 +1,4 @@
+// src/contexts/AuthContext.jsx
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
 
@@ -11,14 +12,37 @@ export function AuthProvider({ children }) {
     // Get initial session
     const getSession = async () => {
       const { data } = await supabase.auth.getSession();
-      setUser(data?.session?.user || null);
+
+      if (data?.session?.user) {
+        // Fetch user profile data including role
+        const { data: profile } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', data.session.user.id)
+          .single();
+
+        setUser(profile || data.session.user);
+      }
+
       setLoading(false);
 
       // Set up auth state listener
       const {
         data: { subscription },
-      } = supabase.auth.onAuthStateChange((_event, session) => {
-        setUser(session?.user || null);
+      } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        if (session?.user) {
+          // Fetch user profile data
+          const { data: profile } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          setUser(profile || session.user);
+        } else {
+          setUser(null);
+        }
+        setLoading(false);
       });
 
       return () => subscription.unsubscribe();
@@ -58,5 +82,9 @@ export function AuthProvider({ children }) {
 }
 
 export function useAuth() {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 }
