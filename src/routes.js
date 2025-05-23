@@ -11,6 +11,7 @@ const Login = lazy(() => import('./pages/auth/Login'));
 const Register = lazy(() => import('./pages/auth/Register'));
 const VerifyEmail = lazy(() => import('./pages/auth/VerifyEmail'));
 const EmailConfirmed = lazy(() => import('./pages/auth/EmailConfirmed'));
+const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
 
 // Facility owner pages (to be created)
 const FacilityDashboard = lazy(() => import('./pages/facility/Dashboard'));
@@ -32,6 +33,7 @@ export const routes = {
     { path: '/register', element: Register },
     { path: '/auth/verify-email', element: VerifyEmail },
     { path: '/auth/email-confirmed', element: EmailConfirmed },
+    { path: '/auth/forgot-password', element: ForgotPassword },
   ],
 
   // Facility owner routes

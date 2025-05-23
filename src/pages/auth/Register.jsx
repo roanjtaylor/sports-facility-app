@@ -32,11 +32,44 @@ function Register() {
     setError('');
   };
 
+  // FIXED: Simplified email existence check
+  const checkEmailExists = async email => {
+    try {
+      const { supabase } = await import('../../services/supabaseClient');
+
+      // Only check users table - this is the most reliable method
+      const { data: existingUser, error: userError } = await supabase
+        .from('users')
+        .select('email')
+        .eq('email', email)
+        .single();
+
+      // PGRST116 means "no rows found" which is what we want for new users
+      if (userError && userError.code !== 'PGRST116') {
+        console.error('Error checking user email:', userError);
+        return false; // Allow registration if we can't check reliably
+      }
+
+      // If we found a user, email exists
+      return !!existingUser;
+    } catch (error) {
+      console.error('Error checking email existence:', error);
+      return false; // Allow registration if check fails
+    }
+  };
+
   const handleRegistration = async registrationData => {
     setLoading(true);
     setError('');
 
     try {
+      // Check if email already exists before attempting registration
+      const emailExists = await checkEmailExists(registrationData.email);
+
+      if (emailExists) {
+        throw new Error('That email is already in use. Please try using another email address.');
+      }
+
       // Import Supabase client
       const { supabase } = await import('../../services/supabaseClient');
 
@@ -47,7 +80,6 @@ function Register() {
         options: {
           emailRedirectTo: `${window.location.origin}/auth/email-confirmed`,
           data: {
-            // Store user data in auth metadata temporarily
             full_name: registrationData.userData.full_name,
             role: registrationData.userData.role,
             ...(registrationData.userData.phone && { phone: registrationData.userData.phone }),
@@ -62,6 +94,13 @@ function Register() {
       });
 
       if (authError) {
+        // Handle specific Supabase auth errors
+        if (
+          authError.message.includes('already registered') ||
+          authError.message.includes('already been registered')
+        ) {
+          throw new Error('That email is already in use. Please try using another email address.');
+        }
         throw new Error(authError.message);
       }
 
@@ -69,7 +108,7 @@ function Register() {
         throw new Error('Registration failed. Please try again.');
       }
 
-      // Step 2: Try to create user profile (this might fail due to RLS, but that's ok)
+      // Step 2: Try to create user profile
       try {
         const userProfileData = {
           id: authData.user.id,
@@ -77,7 +116,6 @@ function Register() {
           ...registrationData.userData,
         };
 
-        // Import and use the user service
         const { createUserProfile } = await import('../../services/userService');
         await createUserProfile(userProfileData);
 
@@ -87,15 +125,14 @@ function Register() {
           'User profile creation failed (will retry after email confirmation):',
           profileError
         );
-        // This is ok - we'll create the profile after email confirmation
       }
 
-      // Step 3: Redirect to verification page regardless of profile creation result
+      // Step 3: Redirect to verification page
       navigate('/auth/verify-email', {
         state: {
           email: registrationData.email,
           message: 'Registration successful! Please check your email to verify your account.',
-          userData: registrationData.userData, // Pass user data for later use
+          userData: registrationData.userData,
         },
       });
     } catch (err) {

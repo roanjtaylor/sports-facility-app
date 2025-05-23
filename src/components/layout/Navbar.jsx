@@ -15,6 +15,8 @@ function Navbar() {
       navigate('/');
     } catch (error) {
       console.error('Logout error:', error);
+      // Still navigate away even if logout fails
+      navigate('/');
     }
   };
 

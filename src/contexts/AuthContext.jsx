@@ -11,38 +11,34 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     // Get initial session
     const getSession = async () => {
-      const { data } = await supabase.auth.getSession();
+      try {
+        const { data } = await supabase.auth.getSession();
 
-      if (data?.session?.user) {
-        // Fetch user profile data including role
-        const { data: profile } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', data.session.user.id)
-          .single();
-
-        setUser(profile || data.session.user);
+        if (data?.session?.user) {
+          await fetchAndSetUserProfile(data.session.user);
+        }
+      } catch (error) {
+        console.error('Error getting session:', error);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
 
       // Set up auth state listener
       const {
         data: { subscription },
       } = supabase.auth.onAuthStateChange(async (event, session) => {
-        if (session?.user) {
-          // Fetch user profile data
-          const { data: profile } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
-          setUser(profile || session.user);
-        } else {
+        try {
+          if (session?.user) {
+            await fetchAndSetUserProfile(session.user);
+          } else {
+            setUser(null);
+          }
+        } catch (error) {
+          console.error('Error in auth state change:', error);
           setUser(null);
+        } finally {
+          setLoading(false);
         }
-        setLoading(false);
       });
 
       return () => subscription.unsubscribe();
@@ -51,37 +47,83 @@ export function AuthProvider({ children }) {
     getSession();
   }, []);
 
+  const fetchAndSetUserProfile = async authUser => {
+    try {
+      // Fetch user profile data including role
+      const { data: profile, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 is "not found" error, which is expected for new users
+        console.error('Error fetching user profile:', error);
+      }
+
+      // Use profile data if available, otherwise fall back to auth user data
+      setUser(
+        profile || {
+          id: authUser.id,
+          email: authUser.email,
+          full_name: authUser.user_metadata?.full_name || authUser.email,
+          role: authUser.user_metadata?.role || null,
+        }
+      );
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      // Set minimal user data from auth
+      setUser({
+        id: authUser.id,
+        email: authUser.email,
+        full_name: authUser.user_metadata?.full_name || authUser.email,
+        role: authUser.user_metadata?.role || null,
+      });
+    }
+  };
+
   const login = async (email, password) => {
     setLoading(true);
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    setLoading(false);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) throw error;
-    return data;
+      if (error) throw error;
+      return data;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const signUp = async (email, password, options = {}) => {
     setLoading(true);
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options,
-    });
-    setLoading(false);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options,
+      });
 
-    if (error) throw error;
-    return data;
+      if (error) throw error;
+      return data;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logout = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signOut();
-    setLoading(false);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
 
-    if (error) throw error;
+      // Clear any stored login preferences
+      localStorage.removeItem('rememberLogin');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const resetPassword = async email => {
@@ -105,7 +147,7 @@ export function AuthProvider({ children }) {
       type: 'signup',
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/verify-email`,
+        emailRedirectTo: `${window.location.origin}/auth/email-confirmed`,
       },
     });
 
