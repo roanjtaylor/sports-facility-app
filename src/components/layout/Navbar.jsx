@@ -33,6 +33,9 @@ function Navbar() {
           <Link to="/facility/settings" className="nav-link">
             Settings
           </Link>
+          <Link to="/profile" className="nav-link">
+            Profile
+          </Link>
         </>
       );
     } else if (user?.role === 'player') {
@@ -49,6 +52,9 @@ function Navbar() {
           </Link>
           <Link to="/player/settings" className="nav-link">
             Settings
+          </Link>
+          <Link to="/profile" className="nav-link">
+            Profile
           </Link>
         </>
       );

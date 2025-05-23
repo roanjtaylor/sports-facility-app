@@ -5,3 +5,5 @@ export { default as PlayerRegister } from './PlayerRegister';
 export { default as ProtectedRoute } from './ProtectedRoute';
 export { default as FacilityOwnerRoute } from './FacilityOwnerRoute';
 export { default as PlayerRoute } from './PlayerRoute';
+export { default as ProfileView } from './ProfileView';
+export { default as ProfileEdit } from './ProfileEdit';
