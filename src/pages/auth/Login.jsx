@@ -18,6 +18,9 @@ function Login() {
   const location = useLocation();
   const { login, user } = useAuth();
 
+  // Get success message from location state (e.g., from password reset)
+  const successMessage = location.state?.message;
+
   // Redirect if user is already logged in
   if (user) {
     const redirectPath =
@@ -100,6 +103,9 @@ function Login() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
             <p className="text-gray-600">Sign in to your account to continue</p>
           </div>
+
+          {/* Show success message if coming from password reset or other flow */}
+          {successMessage && <Alert type="success" message={successMessage} className="mb-6" />}
 
           {error && <Alert type="error" message={error} className="mb-6" />}
 

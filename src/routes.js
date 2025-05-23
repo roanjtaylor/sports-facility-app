@@ -1,4 +1,4 @@
-// src/routes.js (Complete Updated Version)
+// src/routes.js
 import { lazy } from 'react';
 
 // Lazy load components for better performance
@@ -12,6 +12,7 @@ const Register = lazy(() => import('./pages/auth/Register'));
 const VerifyEmail = lazy(() => import('./pages/auth/VerifyEmail'));
 const EmailConfirmed = lazy(() => import('./pages/auth/EmailConfirmed'));
 const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/auth/ResetPassword')); // NEW: Added reset password route
 const Profile = lazy(() => import('./pages/auth/Profile'));
 
 // Facility owner pages (to be created)
@@ -35,6 +36,7 @@ export const routes = {
     { path: '/auth/verify-email', element: VerifyEmail },
     { path: '/auth/email-confirmed', element: EmailConfirmed },
     { path: '/auth/forgot-password', element: ForgotPassword },
+    { path: '/auth/reset-password', element: ResetPassword }, // NEW: Added reset password route
     { path: '/profile', element: Profile },
   ],
 
