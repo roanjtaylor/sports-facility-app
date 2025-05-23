@@ -1,4 +1,4 @@
-// src/routes.js
+// src/routes.js (Complete Updated Version)
 import { lazy } from 'react';
 
 // Lazy load components for better performance
@@ -6,9 +6,11 @@ const Landing = lazy(() => import('./pages/Landing'));
 const Home = lazy(() => import('./pages/Home'));
 const NotFound = lazy(() => import('./pages/404'));
 
-// Auth pages (to be created)
+// Auth pages
 const Login = lazy(() => import('./pages/auth/Login'));
 const Register = lazy(() => import('./pages/auth/Register'));
+const VerifyEmail = lazy(() => import('./pages/auth/VerifyEmail'));
+const EmailConfirmed = lazy(() => import('./pages/auth/EmailConfirmed'));
 
 // Facility owner pages (to be created)
 const FacilityDashboard = lazy(() => import('./pages/facility/Dashboard'));
@@ -28,6 +30,8 @@ export const routes = {
     { path: '/home', element: Home },
     { path: '/login', element: Login },
     { path: '/register', element: Register },
+    { path: '/auth/verify-email', element: VerifyEmail },
+    { path: '/auth/email-confirmed', element: EmailConfirmed },
   ],
 
   // Facility owner routes

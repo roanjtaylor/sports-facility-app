@@ -6,6 +6,7 @@ create table public.users (
   role text not null check (role in ('facility_owner', 'player')),
   date_of_birth date,
   profile_photo_url text,
+  phone text,
   created_at timestamp with time zone default now() not null
 );
 
